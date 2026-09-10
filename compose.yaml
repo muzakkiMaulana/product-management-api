@@ -1,0 +1,54 @@
+services:
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:80"
+    environment:
+      APP_NAME: "Product Management API"
+      APP_ENV: "${APP_ENV:-local}"
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      APP_KEY: "${APP_KEY:-}"
+      APP_URL: "${APP_URL:-http://localhost:8000}"
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: "${DB_DATABASE:-product_management}"
+      DB_USERNAME: "${DB_USERNAME:-product_management}"
+      DB_PASSWORD: "${DB_PASSWORD:-}"
+      CACHE_STORE: database
+      PRODUCT_CACHE_TTL_SECONDS: "${PRODUCT_CACHE_TTL_SECONDS:-60}"
+      AUTH_ACCESS_TOKEN_TTL_MINUTES: "${AUTH_ACCESS_TOKEN_TTL_MINUTES:-15}"
+      AUTH_REFRESH_TOKEN_TTL_MINUTES: "${AUTH_REFRESH_TOKEN_TTL_MINUTES:-10080}"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:3000}"
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: log
+      LOG_CHANNEL: stderr
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://localhost/up') === false ? 1 : 0);"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: "${DB_DATABASE:-product_management}"
+      MYSQL_USER: "${DB_USERNAME:-product_management}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-}"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init-test-database.sh:/docker-entrypoint-initdb.d/init-test-database.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql --protocol=tcp -h 127.0.0.1 -u \"$$MYSQL_USER\" \"$$MYSQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+volumes:
+  mysql_data:

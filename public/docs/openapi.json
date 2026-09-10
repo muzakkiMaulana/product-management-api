@@ -1,0 +1,721 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+      "title": "Product Management API",
+      "description": "REST API for product management and authentication.",
+      "version": "1.0.0"
+    },
+  
+    "servers": [
+      {
+        "url": "http://127.0.0.1:8000/api",
+        "description": "Local development server"
+      }
+    ],
+  
+    "tags": [
+      {
+        "name": "Authentication",
+        "description": "Authentication endpoints"
+      },
+      {
+        "name": "Products",
+        "description": "Product management endpoints"
+      }
+    ],
+  
+    "paths": {
+  
+      "/auth/register": {
+        "post": {
+          "tags": ["Authentication"],
+          "summary": "Register user",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterRequest"
+                },
+                "example": {
+                  "username": "jhon_doe",
+                  "password": "supersecret",
+                  "password_confirmation": "supersecret"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "User registered successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "$ref": "#/components/responses/ValidationError"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            }
+          }
+        }
+      },
+  
+      "/auth/login": {
+        "post": {
+          "tags": ["Authentication"],
+          "summary": "Login user",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginRequest"
+                },
+                "example": {
+                  "username": "jhon_doe",
+                  "password": "supersecret"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Login successful",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "422": {
+              "$ref": "#/components/responses/ValidationError"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            }
+          }
+        }
+      },
+  
+      "/auth/refresh": {
+        "post": {
+          "tags": ["Authentication"],
+          "summary": "Refresh access token",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshTokenRequest"
+                },
+                "example": {
+                  "refresh_token": "your-refresh-token"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Token refreshed successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "422": {
+              "$ref": "#/components/responses/ValidationError"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            }
+          }
+        }
+      },
+  
+      "/products": {
+        "get": {
+          "tags": ["Products"],
+          "summary": "Get product list",
+          "parameters": [
+            {
+              "name": "search",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Search products by title"
+            },
+            {
+              "name": "category",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Filter products by category"
+            },
+            {
+              "name": "limit",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "default": 10
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Product list",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProductCollection"
+                  }
+                }
+              }
+            },
+            "422": {
+              "$ref": "#/components/responses/ValidationError"
+            }
+          }
+        },
+  
+        "post": {
+          "tags": ["Products"],
+          "summary": "Create product",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductRequest"
+                },
+                "example": {
+                  "title": "Awesome T-Shirt",
+                  "price": 99.99,
+                  "description": "High-quality cotton t-shirt",
+                  "category": "Clothes",
+                  "images": [
+                    "https://example.com/images/shirt.jpg"
+                  ]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Product created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProductResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "422": {
+              "$ref": "#/components/responses/ValidationError"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            }
+          }
+        }
+      },
+  
+      "/products/{id}": {
+        "get": {
+          "tags": ["Products"],
+          "summary": "Get product detail",
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/ProductId"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Product detail",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProductResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFound"
+            }
+          }
+        },
+  
+        "put": {
+          "tags": ["Products"],
+          "summary": "Update product",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/ProductId"
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductRequest"
+                },
+                "example": {
+                  "title": "Updated T-Shirt",
+                  "price": 109.99,
+                  "description": "Updated description",
+                  "category": "Clothes",
+                  "images": [
+                    "https://example.com/images/shirt.jpg"
+                  ]
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Product updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProductResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFound"
+            },
+            "422": {
+              "$ref": "#/components/responses/ValidationError"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            }
+          }
+        },
+  
+        "delete": {
+          "tags": ["Products"],
+          "summary": "Delete product",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/ProductId"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Product deleted successfully",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "message": "Product deleted successfully.",
+                    "data": null
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFound"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            }
+          }
+        }
+      }
+    },
+  
+    "components": {
+  
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "Sanctum"
+        }
+      },
+  
+      "parameters": {
+        "ProductId": {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Product ID",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+  
+      "schemas": {
+  
+        "RegisterRequest": {
+          "type": "object",
+          "required": [
+            "username",
+            "password",
+            "password_confirmation"
+          ],
+          "properties": {
+            "username": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 50,
+              "example": "jhon_doe"
+            },
+            "password": {
+              "type": "string",
+              "format": "password",
+              "minLength": 8,
+              "example": "supersecret"
+            },
+            "password_confirmation": {
+              "type": "string",
+              "format": "password",
+              "example": "supersecret"
+            }
+          }
+        },
+  
+        "LoginRequest": {
+          "type": "object",
+          "required": [
+            "username",
+            "password"
+          ],
+          "properties": {
+            "username": {
+              "type": "string",
+              "example": "jhon_doe"
+            },
+            "password": {
+              "type": "string",
+              "format": "password",
+              "example": "supersecret"
+            }
+          }
+        },
+  
+        "RefreshTokenRequest": {
+          "type": "object",
+          "required": [
+            "refresh_token"
+          ],
+          "properties": {
+            "refresh_token": {
+              "type": "string"
+            }
+          }
+        },
+  
+        "ProductRequest": {
+          "type": "object",
+          "required": [
+            "title",
+            "price",
+            "category",
+            "images"
+          ],
+          "properties": {
+            "title": {
+              "type": "string",
+              "maxLength": 255,
+              "example": "Awesome T-Shirt"
+            },
+            "price": {
+              "type": "number",
+              "format": "double",
+              "minimum": 0,
+              "example": 99.99
+            },
+            "description": {
+              "type": "string",
+              "nullable": true,
+              "maxLength": 10000,
+              "example": "High-quality cotton t-shirt"
+            },
+            "category": {
+              "type": "string",
+              "maxLength": 255,
+              "example": "Clothes"
+            },
+            "images": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "example": [
+                "https://example.com/images/shirt.jpg"
+              ]
+            }
+          }
+        },
+  
+        "Product": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1
+            },
+            "title": {
+              "type": "string",
+              "example": "Awesome T-Shirt"
+            },
+            "price": {
+              "type": "string",
+              "example": "99.99"
+            },
+            "description": {
+              "type": "string",
+              "nullable": true,
+              "example": "High-quality cotton t-shirt"
+            },
+            "category": {
+              "type": "string",
+              "example": "Clothes"
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "created_by": {
+              "type": "string",
+              "nullable": true
+            },
+            "created_by_id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updated_by": {
+              "type": "string",
+              "nullable": true
+            },
+            "updated_by_id": {
+              "type": "integer",
+              "nullable": true
+            }
+          }
+        },
+  
+        "User": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1
+            },
+            "username": {
+              "type": "string",
+              "example": "jhon_doe"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+  
+        "UserResponse": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        },
+  
+        "ProductResponse": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/components/schemas/Product"
+            }
+          }
+        },
+  
+        "ProductCollection": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Product"
+              }
+            },
+            "links": {
+              "type": "object"
+            },
+            "meta": {
+              "type": "object"
+            }
+          }
+        },
+  
+        "AuthResponse": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "object",
+              "properties": {
+                "user": {
+                  "$ref": "#/components/schemas/User"
+                },
+                "authentication_token": {
+                  "type": "string"
+                },
+                "refresh_token": {
+                  "type": "string"
+                },
+                "token_type": {
+                  "type": "string",
+                  "example": "Bearer"
+                },
+                "expires_in": {
+                  "type": "integer",
+                  "example": 900
+                },
+                "expires_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "refresh_expires_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        }
+      },
+  
+      "responses": {
+  
+        "Unauthorized": {
+          "description": "Unauthenticated",
+          "content": {
+            "application/json": {
+              "example": {
+                "message": "Unauthenticated."
+              }
+            }
+          }
+        },
+  
+        "NotFound": {
+          "description": "Resource not found",
+          "content": {
+            "application/json": {
+              "example": {
+                "message": "Resource not found."
+              }
+            }
+          }
+        },
+  
+        "ValidationError": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "example": {
+                "message": "The given data was invalid.",
+                "errors": {
+                  "title": [
+                    "The title field is required."
+                  ]
+                }
+              }
+            }
+          }
+        },
+  
+        "TooManyRequests": {
+          "description": "Too many requests",
+          "content": {
+            "application/json": {
+              "example": {
+                "message": "Too Many Attempts."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
